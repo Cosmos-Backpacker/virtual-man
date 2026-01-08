@@ -3,13 +3,9 @@ package com.example.virtualman.controller;
 import com.example.virtualman.pojo.Result;
 import com.example.virtualman.pojo.User;
 import com.example.virtualman.service.IUserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.List;
 
 /**
  * <p>
@@ -85,6 +81,7 @@ public class UserController {
     public Result getAllUsers(HttpServletRequest request) {
         return userService.getAllUsers(request);
     }
+
 
     /**
      * 管理员根据ID查询用户

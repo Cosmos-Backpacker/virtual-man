@@ -1,11 +1,11 @@
 package com.example.virtualman.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.virtualman.mapper.UserMapper;
 import com.example.virtualman.pojo.Result;
 import com.example.virtualman.pojo.User;
-import com.example.virtualman.mapper.UserMapper;
 import com.example.virtualman.service.IUserService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +16,6 @@ import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -59,7 +57,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<User>();
         wrapper.eq(User::getUserAccount, account);
 
-        long count = 0;
+        long count;
         //直接查找数目，不用返回数据了
         count = mapper.selectCount(wrapper);
         if (count > 0) {
@@ -102,7 +100,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + password).getBytes());
 
         //5.查询用户
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<User>();
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUserAccount, account)
                 .eq(User::getUserPassword, encryptPassword);
 
@@ -120,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
             //往session中设置的登录状态
 //            request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
-            log.info("存储Session成功,{}", user.toString());
+            log.info("存储Session成功,{}", user);
 
             return Result.success("登录成功！！", user);
         }
@@ -181,7 +179,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
             return false;
         }
-
 
         //重新存放缓存
         User newUser = this.getById(userId);
@@ -247,6 +244,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result updateUserById(Long id, User user, HttpServletRequest request) {
         // 检查是否为管理员
         if (!isAdmin(request)) {
+
             return Result.error(403, "权限不足，仅管理员可操作");
         }
 
@@ -303,6 +301,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         int result = mapper.updateById(updateUser);
         if (result > 0) {
+
+            User newUser = this.getById(id);
+            if (newUser == null) {
+                return Result.error("更新失败");
+            }
+
             return Result.success("更新成功");
         } else {
             return Result.error("更新失败");
@@ -381,9 +385,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         List<User> userList = mapper.selectList(queryWrapper);
 
         // 清除敏感信息
-        userList.forEach(user -> {
-            user.setUserPassword(null);
-        });
+        userList.forEach(user -> user.setUserPassword(null));
 
         log.info("管理员搜索用户，条件: username={}, email={}, status={}, 结果数量: {}",
                 username, email, status, userList.size());
